@@ -1,0 +1,8 @@
+Task,WCRT,Deadline,Status
+T1,28,6,false
+T2,4,60,true
+T3,20,10,false
+T4,15,12,false
+T5,13,15,true
+T6,11,20,true
+T7,8,30,true
