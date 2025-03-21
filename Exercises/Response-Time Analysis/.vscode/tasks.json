@@ -7,9 +7,9 @@
             "command": "g++",
             "args": [
                 "-g",
-                "${workspaceFolder}/src/real_time_analysis.cpp",
+                "${workspaceFolder}/src/response_time_analysis.cpp",
                 "-o",
-                "${workspaceFolder}/build/real_time_analysis"
+                "${workspaceFolder}/build/response_time_analysis"
             ],
             "group": {
                 "kind": "build",
