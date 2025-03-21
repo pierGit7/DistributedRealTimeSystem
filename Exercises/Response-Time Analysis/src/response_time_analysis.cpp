@@ -36,10 +36,10 @@ void readTasksCSV(const string& filename, vector<Task>& tasks)
 
         getline(ss, token, ','); // Task ID
         task.id = token;
-        getline(ss, token, ','); // WCET
-        task.WCET = stoi(token);
         getline(ss, token, ','); // BCET
         task.BCET = stoi(token);
+        getline(ss, token, ','); // WCET
+        task.WCET = stoi(token);
         getline(ss, token, ','); // Period
         task.period = stoi(token);
         getline(ss, token, ','); // Deadline
@@ -56,31 +56,28 @@ void RTA_test(vector<Task>& tasks)
 {
     // Sort tasks by priority (lower number means higher priority)
     sort(tasks.begin(), tasks.end(), [](const Task& a, const Task& b) {
-        return a.priority < b.priority;  // Ensure lower priority number = higher priority
+        return a.priority < b.priority;
     });
 
-    for (size_t task = 0; task < tasks.size(); task++)
+    for (size_t i = 0; i < tasks.size(); i++)
     {
-        int R = tasks[task].WCET;
+        int R = tasks[i].WCET;
         int last_R = -1;
         bool schedulable = true;
-        int I = 0; // Reset interference for each iteration
 
         while (R != last_R)
         {
             last_R = R;
-
-            // Compute interference from higher-priority tasks
-            for (size_t j = 0; j < task; j++)
+            int I = 0; 
+            for (size_t j = 0; j < i; j++)
             {
                 I += ceil((double)R / tasks[j].period) * tasks[j].WCET;
             }
+            R = tasks[i].WCET + I;
 
-            R = I + tasks[task].WCET;
-
-            if (R > tasks[task].deadline)
+            if (R > tasks[i].deadline)
             {
-                cout << "Task " << tasks[task].id << " is not schedulable." << endl;
+                cout << "Task " << tasks[i].id << " is not schedulable with WCRT." << endl;
                 schedulable = false;
                 break;
             }
@@ -88,10 +85,11 @@ void RTA_test(vector<Task>& tasks)
 
         if (schedulable)
         {
-            cout << "Task " << tasks[task].id << " is schedulable with WCRT = " << R << endl;
+            cout << "Task " << tasks[i].id << " is schedulable with WCRT = " << R << endl;
         }
     }
 }
+
 
 int main(int argc, char* argv[])
 {
