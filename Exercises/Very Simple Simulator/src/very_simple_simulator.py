@@ -56,9 +56,3 @@ def run_cycle(input_path: str) -> None:
             current_time += 1
 
     output_result_csv(input_path, wcrt_dict, tasks_dict)
-
-
-if __name__ == "__main__":
-    run_cycle(
-        "/Users/pierfrancesco/Desktop/second semester DTU/distributed/repo/Exercises/Very Simple Simulator/exercise-TC1.csv"
-    )
