@@ -11,8 +11,8 @@ struct Task {
     string id;
     int BCET;
     int WCET;
-    int period;  
-    int deadline; 
+    int period;
+    int deadline;
     int priority; // Lower number => higher priority for RMS
 };
 
@@ -28,7 +28,7 @@ struct Job {
 void readTasksCSV(const string& filename, vector<Task>& tasks)
 {
     ifstream file(filename);
-    if (!file.is_open()) 
+    if (!file.is_open())
     {
         cerr << "Error: Could not open file " << filename << endl;
         return;
@@ -68,7 +68,7 @@ void readTasksCSV(const string& filename, vector<Task>& tasks)
 // Function to find the job with the highest priority
 Job *highest_priority(vector<Job *>& readyList)
 {
-    if (readyList.empty()) 
+    if (readyList.empty())
     {
         return nullptr;
     }
@@ -77,7 +77,7 @@ Job *highest_priority(vector<Job *>& readyList)
         readyList.begin(),
         readyList.end(),
         [](Job* a, Job* b) {
-            return a->task.priority < b->task.priority; 
+            return a->task.priority < b->task.priority;
         }
     );
 }
@@ -101,7 +101,7 @@ int advanceTime()
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2) 
+    if (argc != 2)
     {
         cerr << "Usage: " << argv[0] << " <tasks.csv>" << endl;
         return 1;
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
     readTasksCSV(filename, tasks);
 
     // Simulation time (n cycles)
-    int n = 1000; 
+    int n = 1000;
     int currentTime = 0;
 
     // List of all jobs that are in the system
@@ -128,16 +128,16 @@ int main(int argc, char* argv[])
     while (currentTime <= n)
     {
         // For each task, if it is time to release a new job, create it.
-        for (size_t i = 0; i < tasks.size(); ++i) 
+        for (size_t i = 0; i < tasks.size(); ++i)
         {
-            if (currentTime >= nextReleaseTimes[i]) 
+            if (currentTime >= nextReleaseTimes[i])
             {
                 Job newJob { tasks[i], currentTime, tasks[i].WCET, 0 };
                 jobs.push_back(newJob);
                 nextReleaseTimes[i] += tasks[i].period;
             }
         }
-        
+
         vector<Job*> readyList = get_ready(jobs, currentTime);
         Job* currentJob = highest_priority(readyList);
 
@@ -148,16 +148,16 @@ int main(int argc, char* argv[])
             currentJob->remainingTime -= delta;
 
             // If the job has completed execution, calculate its response time and update WCRT
-            if (currentJob->remainingTime <= 0) 
+            if (currentJob->remainingTime <= 0)
             {
                 currentJob->responseTime = currentTime - currentJob->releaseTime;
-                
+
                 // Find the corresponding task index
                 auto it = find_if(tasks.begin(), tasks.end(), [&](const Task& t) {
                     return t.id == currentJob->task.id;
                 });
 
-                if (it != tasks.end()) 
+                if (it != tasks.end())
                 {
                     size_t taskIndex = distance(tasks.begin(), it);
                     worstCaseResponseTimes[taskIndex] = max(
@@ -178,12 +178,12 @@ int main(int argc, char* argv[])
     // Output the worst-case response times for each task
     cout << "Task\tWCRT\tDeadline\tStatus" << endl;
     cout << "---------------------------------" << endl;
-    for (size_t i = 0; i < tasks.size(); ++i) 
+    for (size_t i = 0; i < tasks.size(); ++i)
     {
         string status = (worstCaseResponseTimes[i] <= tasks[i].deadline) ? "✓" : "✗";
-        cout << " " << tasks[i].id << "\t" 
-            << worstCaseResponseTimes[i] << "\t" 
-            << tasks[i].deadline << "\t\t" 
+        cout << " " << tasks[i].id << "\t"
+            << worstCaseResponseTimes[i] << "\t"
+            << tasks[i].deadline << "\t\t"
             << status << endl;
     }
 

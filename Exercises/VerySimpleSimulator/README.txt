@@ -3,7 +3,7 @@ README.txt
 The files in the Exerercise/Content tab are test cases are provided as a starting point for the 02225 DRTS exercise.
 
 They are in CSV (Comma-Separated Values) format and contain the model parameters for periodic tasks:
-  
+
   - Task: Task name
   - BCET: Best-case execution time
   - WCET: Worst-case execution time

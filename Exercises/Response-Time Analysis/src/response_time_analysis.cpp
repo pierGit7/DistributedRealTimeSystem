@@ -11,8 +11,8 @@ struct Task {
     string id;
     int BCET;
     int WCET;
-    int period;  
-    int deadline; 
+    int period;
+    int deadline;
     int priority; // Lower number => higher priority for RMS, if you wish
 };
 
@@ -68,7 +68,7 @@ void RTA_test(vector<Task>& tasks)
         while (R != last_R)
         {
             last_R = R;
-            int I = 0; 
+            int I = 0;
             for (size_t j = 0; j < i; j++)
             {
                 I += ceil((double)R / tasks[j].period) * tasks[j].WCET;
