@@ -1,7 +1,11 @@
 import pandas as pd
 import numpy as np
-from jobs import Jobs, check_remaining_jobs, get_ready_list
-from task_handler import output_result_csv
+from Exercises.VerySimpleSimulator.src.jobs import (
+    Jobs,
+    check_remaining_jobs,
+    get_ready_list,
+)
+from Exercises.VerySimpleSimulator.src.task_handler import output_result_csv
 
 
 def run_cycle(input_path: str) -> None:
@@ -21,7 +25,7 @@ def run_cycle(input_path: str) -> None:
 
     # init the worst case dictionary example[T0, 0; T1,0; ...]
     # wcrt_dict = {tasks.values[i][0]: 0 for i in range(len(tasks))}
-    wcrt_dict = {task: 0 for task in tasks["Task"]}
+    wcrt_dict = {task: 0.0 for task in tasks["Task"]}
 
     while current_time <= num_cycles and check_remaining_jobs(jobs_queue):
         # release job at the start of the period
@@ -55,4 +59,6 @@ def run_cycle(input_path: str) -> None:
         else:
             current_time += 1
 
+    # Convert wcrt_dict values to float
+    wcrt_dict = {k: float(v) for k, v in wcrt_dict.items()}
     output_result_csv(input_path, wcrt_dict, tasks_dict)
