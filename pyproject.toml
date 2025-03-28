@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Simulator"
+version = "0.0.1"
+description = "A simulator for distributed real time systems project"
+authors = [
+    { name = "group74", email = "your@email.com" },
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["dependencies", "optional-dependencies"]
+
+[project.scripts]
+simulator = "VerySimpleSimulator.src.very_simple_simulator:app"
+run_cycle = "VerySimpleSimulator.src.very_simple_simulator:run_cycle"
+
+[tool.setuptools.packages.find]
+where = ["Exercises"]
+include = ["Exercises.*"]
+
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = {file = ["requirements_dev.txt"]}
+
+[tool.ruff]
+line-length = 120
+lint.select = ["I"]
+
+[tool.coverage.run]
+omit = ["tests/*"]

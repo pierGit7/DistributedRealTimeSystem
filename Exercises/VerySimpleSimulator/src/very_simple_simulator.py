@@ -1,17 +1,21 @@
 import pandas as pd
 import numpy as np
-from Exercises.VerySimpleSimulator.src.jobs import (
+from jobs import (
     Jobs,
     check_remaining_jobs,
     get_ready_list,
 )
-from Exercises.VerySimpleSimulator.src.task_handler import output_result_csv
-from Exercises.ResponseTimeAnalysis.src.real_time_analysis import (
-    response_time_analysis,
+from task_handler import output_result_csv
+import typer
+from real_time_analysis import (
     run_rta
 )
+from typing import Annotated
 
-def run_cycle(input_path: str) -> None:
+app = typer.Typer()
+
+@app.command(name="run_cycle")
+def run_cycle(input_path: Annotated[str, typer.Option("--path", "-p")]) -> None:
     # Print the contents of the CSV file
     # Task  BCET(best case execution time)  WCET(worst case execution time)  Period  Deadline  Priority
     rta = run_rta(input_path)
@@ -66,3 +70,6 @@ def run_cycle(input_path: str) -> None:
     # Convert wcrt_dict values to float
     wcrt_dict = {k: float(v) for k, v in wcrt_dict.items()}
     output_result_csv(input_path, wcrt_dict, tasks_dict, rta)
+    
+if __name__ == "__main__":
+    app()
