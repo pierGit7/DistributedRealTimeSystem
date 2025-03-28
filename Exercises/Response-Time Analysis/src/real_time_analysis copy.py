@@ -69,13 +69,12 @@ def response_time_analysis(tasks):
     return results
 
 
-def main():
+def run_rta(path_file):
     """
     Main function to read tasks and perform response time analysis.
     """
     # Read tasks from CSV
-    tasks = read_csv(
-        '/Users/pierfrancesco/Desktop/second semester DTU/distributed/repo/Exercises/Response-Time Analysis/exercise-TC1.csv')
+    tasks = read_csv(path_file)
 
     # Perform response time analysis
     analysis_results = response_time_analysis(tasks)
@@ -86,7 +85,4 @@ def main():
             print(f"Task {result['Task']} is schedulable with WCRT = {result['WCRT']:.1f}")
         else:
             print(f"Task {result['Task']} is not schedulable with WCRT.")
-
-
-if __name__ == "__main__":
-    main()
+    return analysis_results
