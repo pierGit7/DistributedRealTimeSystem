@@ -29,54 +29,44 @@ def read_csv(file):
 
 def response_time_analysis(tasks):
     """
-    Perform precise Response-Time Analysis following the algorithm exactly.
+    Perform Response-Time Analysis.
     """
-    # Sort tasks by priority (highest priority first) for analysis
-    sorted_tasks = sorted(tasks, key=lambda x: x['priority'], reverse=True)
+    # Sort tasks by priority (lower number means higher priority)
+    sorted_tasks = sorted(tasks, key=lambda x: x['priority'])
 
     results = []
 
     for i, task in enumerate(sorted_tasks):
-        Ci = task['wcet']  # Worst-case execution time
-        Di = task['deadline']  # Deadline
+        R = task['wcet']  # Initial response time
+        last_R = -1
+        schedulable = True
 
-        # Initial response timess
-        Ri = Ci
-
-        while True:
-            # Calculate interference from higher priority tasks
+        while R != last_R:
+            last_R = R
             interference = 0
+
+            # Calculate interference from higher-priority tasks
             for j in range(i):
                 higher_task = sorted_tasks[j]
-                interference += math.ceil(Ri / higher_task['period']) * higher_task['wcet']
+                interference += math.ceil(R / higher_task['period']) * higher_task['wcet']
 
-            # New response time calculation
-            new_Ri = Ci + interference
+            R = task['wcet'] + interference
 
-            # Convergence check
-            if new_Ri == Ri:
+            # Check if the task is schedulable
+            if R > task['deadline']:
+                schedulable = False
                 break
-
-            Ri = new_Ri
-
-            # Schedulability check
-            if Ri > Di:
-                break
-
-        # Determine schedulability
-        schedulable = Ri <= Di
 
         # Store results
         result = {
             'Task': task['name'],
-            'WCRT': Ri,
-            'Deadline': Di,
-            'Status': '✓' if schedulable else '✗'
+            'WCRT': R,
+            'Deadline': task['deadline'],
+            'Status': 'Schedulable' if schedulable else 'Not Schedulable'
         }
         results.append(result)
 
-    # Sort results by task name to get T1, T2, ... order
-    return sorted(results, key=lambda x: x['Task'])
+    return results
 
 
 def main():
@@ -85,16 +75,17 @@ def main():
     """
     # Read tasks from CSV
     tasks = read_csv(
-        '/Users/aske/PycharmProjects/DistributedRealTimeSystem/Exercises/Response-Time Analysis/exercise-TC1.csv')
+        '/Users/pierfrancesco/Desktop/second semester DTU/distributed/repo/Exercises/Response-Time Analysis/exercise-TC1.csv')
 
     # Perform response time analysis
     analysis_results = response_time_analysis(tasks)
 
-    # Print results in a formatted table
-    print("----  ----  --------  ------")
+    # Print results
     for result in analysis_results:
-        print(f"{result['Task']:4} {result['WCRT']:5.1f}     {result['Deadline']:3}      {result['Status']}")
-    print("----  ----  --------  ------")
+        if result['Status'] == 'Schedulable':
+            print(f"Task {result['Task']} is schedulable with WCRT = {result['WCRT']:.1f}")
+        else:
+            print(f"Task {result['Task']} is not schedulable with WCRT.")
 
 
 if __name__ == "__main__":
