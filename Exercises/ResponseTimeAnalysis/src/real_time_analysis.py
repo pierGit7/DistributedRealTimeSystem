@@ -75,7 +75,7 @@ def run_rta(path_file):
     """
     # Read tasks from CSV
     tasks = read_csv(path_file)
-
+    print(tasks)
     # Perform response time analysis
     analysis_results = response_time_analysis(tasks)
 

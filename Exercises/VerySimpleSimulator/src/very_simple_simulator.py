@@ -6,11 +6,15 @@ from Exercises.VerySimpleSimulator.src.jobs import (
     get_ready_list,
 )
 from Exercises.VerySimpleSimulator.src.task_handler import output_result_csv
-
+from Exercises.ResponseTimeAnalysis.src.real_time_analysis import (
+    response_time_analysis,
+    run_rta
+)
 
 def run_cycle(input_path: str) -> None:
     # Print the contents of the CSV file
     # Task  BCET(best case execution time)  WCET(worst case execution time)  Period  Deadline  Priority
+    rta = run_rta(input_path)
     tasks = pd.read_csv(input_path)
     tasks_dict = tasks.to_dict(orient="records")
 
@@ -61,4 +65,4 @@ def run_cycle(input_path: str) -> None:
 
     # Convert wcrt_dict values to float
     wcrt_dict = {k: float(v) for k, v in wcrt_dict.items()}
-    output_result_csv(input_path, wcrt_dict, tasks_dict)
+    output_result_csv(input_path, wcrt_dict, tasks_dict, rta)

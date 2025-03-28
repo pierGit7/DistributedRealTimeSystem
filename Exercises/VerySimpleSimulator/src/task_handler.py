@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def output_result_csv(ouput_path: str, wcrt_dict: dict, tasks: np.array) -> None:
+def output_result_csv(ouput_path: str, wcrt_dict: dict, tasks: np.array, rta: dict) -> None:
     """
     Writes the worst-case response time dictionary to a CSV file.
     Parameters:
@@ -12,11 +12,11 @@ def output_result_csv(ouput_path: str, wcrt_dict: dict, tasks: np.array) -> None
     # Create a list to store the results
     results = []
 
-    for job in tasks:
+    for i, job in enumerate(tasks):
         task = job["Task"]
         wcrt = wcrt_dict[task]
         deadline = job["Deadline"]
-        status = "true" if wcrt <= deadline else "false"
+        status = "true" if rta[i]['Status'] == 'Schedulable' else "false"
         results.append([task, wcrt, deadline, status])
 
     # Create a DataFrame from the results
