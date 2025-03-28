@@ -6,7 +6,9 @@ from Exercises.VerySimpleSimulator.src.jobs import (
     get_ready_list,
 )
 from Exercises.VerySimpleSimulator.src.task_handler import output_result_csv
-
+from Exercises.ResponseTimeAnalysis.src.real_time_analysis import (
+    response_time_analysis
+)
 
 def run_cycle(input_path: str) -> None:
     # Print the contents of the CSV file
@@ -60,5 +62,6 @@ def run_cycle(input_path: str) -> None:
             current_time += 1
 
     # Convert wcrt_dict values to float
+    rta = response_time_analysis(input_path)
     wcrt_dict = {k: float(v) for k, v in wcrt_dict.items()}
-    output_result_csv(input_path, wcrt_dict, tasks_dict)
+    output_result_csv(input_path, wcrt_dict, tasks_dict, rta)

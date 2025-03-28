@@ -32,7 +32,7 @@ def response_time_analysis(tasks):
     Perform Response-Time Analysis.
     """
     # Sort tasks by priority (lower number means higher priority)
-    sorted_tasks = sorted(tasks, key=lambda x: x['priority'])
+    sorted_tasks = sorted(tasks, key=lambda x: x['Priority'])
 
     results = []
 
@@ -75,7 +75,7 @@ def run_rta(path_file):
     """
     # Read tasks from CSV
     tasks = read_csv(path_file)
-
+    print(tasks)
     # Perform response time analysis
     analysis_results = response_time_analysis(tasks)
 
