@@ -32,7 +32,7 @@ def response_time_analysis(tasks):
     Perform Response-Time Analysis.
     """
     # Sort tasks by priority (lower number means higher priority)
-    sorted_tasks = sorted(tasks, key=lambda x: x['Priority'])
+    sorted_tasks = sorted(tasks, key=lambda x: x['priority'])
 
     results = []
 
