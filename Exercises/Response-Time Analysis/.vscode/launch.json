@@ -5,7 +5,7 @@
             "name": "Debug C++",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/real_time_analysis", 
+            "program": "${workspaceFolder}/build/response_time_analysis",
             "args": ["${workspaceFolder}/exercise-TC2.csv"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
