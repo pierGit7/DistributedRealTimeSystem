@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.common.scheduler import Scheduler
+from common.scheduler import Scheduler
 
 @dataclass
 class Architecture:
