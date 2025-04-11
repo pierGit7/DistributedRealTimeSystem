@@ -3,10 +3,7 @@ from dataclasses import dataclass
 from assignment.simulator.src.scheduler import Scheduler
 
 @dataclass
-class Budget:
-    component_id: str
-    scheduler:Scheduler
-    budget:int
-    period:int
+class Architecture:
     core_id:int
-    priority:int|None
+    speed_factor:float
+    scheduler: Scheduler
