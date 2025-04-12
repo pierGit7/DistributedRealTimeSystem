@@ -36,6 +36,7 @@ def read_budgets(csv:str)-> list[Budget]:
 
     df = pd.read_csv(csv)
 
+    budgets = []
     for _,row in df.iterrows():
         budget = Budget(
             component_id=row['component_id'],
@@ -46,6 +47,8 @@ def read_budgets(csv:str)-> list[Budget]:
             priority=row['priority']
         )
         budgets.append(budget)
+
+    return budgets
 
 def _get_csv_path(csv:str) -> str:
     if os.path.exists(csv):
