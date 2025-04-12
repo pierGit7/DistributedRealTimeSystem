@@ -104,7 +104,7 @@ if __name__ == "__main__":
     supply_function = bdr.get_supply_function()
     for end_key, values in supply_function.items():
         plt.plot(range(bdr.time_interval), values, label=f"End Key {end_key}")
-
+    plt.plot(range(bdr.time_interval), bdr.get_supply_bound_function(supply_function, bdr.time_interval), label="Supply Bound Function", linestyle='--')
     plt.title("Supply Function")
     plt.xlabel("Time")
     plt.ylabel("Supply")
