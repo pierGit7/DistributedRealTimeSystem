@@ -5,8 +5,12 @@ class BDR:
     def __init__(self, model: SRPModel, time_interval: int,):
         self.model = model
         self.time_interval = time_interval
+        self.availability_factor = self.get_availability_factor()
+        self.supply_function = self.get_supply_function()
+        self.supply_bound_function = self.get_supply_bound_function(self.supply_function, time_interval)
+        self.partition_delay = self.get_partition_delay()
         
-    def get_availability_factor(self):
+    def get_availability_factor(self) -> float:
         """
         Calculate the availability factor for a given SRP model.
         
@@ -27,7 +31,7 @@ class BDR:
         
         return availability_factor
 
-    def get_partition_delay(self):
+    def get_partition_delay(self) -> float:
         """
         Calculate the partition delay for a given SRP model.
         
@@ -38,11 +42,17 @@ class BDR:
             float: The partition delay for the given SRP model.
         """
         partition_delay = 0
-        supply_bound_function = self.get_supply_bound_function(self.get_supply_function(), self.time_interval)
-        
+        supply_bound_function = self.supply_bound_function
+        for time, supply in enumerate(supply_bound_function):
+            if self.availability_factor < supply:
+                slope = (supply - supply_bound_function[time - 1]) / 1
+                intercept = supply - slope * time
+                partition_delay = (self.availability_factor - intercept) / slope
+                break
+
         return partition_delay
 
-    def get_supply_function(self):
+    def get_supply_function(self) -> dict[int, list[int]]:
         """
         Calculate the supply function for a given SRP model.
         
@@ -72,7 +82,7 @@ class BDR:
         
         return supply_function
 
-    def get_supply_bound_function(self, supply_function: dict[int, list[int]], time_interval: int):
+    def get_supply_bound_function(self, supply_function: dict[int, list[int]], time_interval: int) -> list[int]:
         """
         Calculate the supply bound function for a given supply function.
         
@@ -82,7 +92,7 @@ class BDR:
         Returns:
             list[int]: The supply bound function for the given supply function.
         """
-        supply_function = self.get_supply_function()
+        supply_function = self.supply_function
         values = supply_function.values()
         supply_bound_function = [0 for _ in range(self.time_interval)]
         for i in range(self.time_interval):
@@ -93,7 +103,7 @@ class BDR:
 if __name__ == "__main__":
     # Example usage
     model = SRPModel(resource_access=[(1, 2), (5, 7)], period=8)
-    bdr = BDR(model=model, time_interval=25)
+    bdr = BDR(model=model, time_interval=26)
     
     print("Availability Factor:", bdr.get_availability_factor())
     print("Partition Delay:", bdr.get_partition_delay())
@@ -106,6 +116,7 @@ if __name__ == "__main__":
     for end_key, values in supply_function.items():
         plt.plot(range(bdr.time_interval), values, label=f"End Key {end_key}")
     plt.plot(range(bdr.time_interval), bdr.get_supply_bound_function(supply_function, bdr.time_interval), label="Supply Bound Function", linestyle='--')
+    plt.plot(bdr.partition_delay, bdr.availability_factor, 'ro', label="Partition Delay")
     plt.title("Supply Function")
     plt.xlabel("Time")
     plt.ylabel("Supply")
