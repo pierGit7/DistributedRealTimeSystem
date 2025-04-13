@@ -96,6 +96,7 @@ if __name__ == "__main__":
     bdr = BDR(model=model, time_interval=25)
     
     print("Availability Factor:", bdr.get_availability_factor())
+    print("Partition Delay:", bdr.get_partition_delay())
     print("Supply Function:", bdr.get_supply_function())
     print("Supply Bound Function:", bdr.get_supply_bound_function(bdr.get_supply_function(), 20))
     import matplotlib.pyplot as plt
