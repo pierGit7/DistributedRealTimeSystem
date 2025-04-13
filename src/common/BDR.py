@@ -1,5 +1,5 @@
 from SRPModel import SRPModel
-
+import numpy as np
 
 class BDR:
     def __init__(self, model: SRPModel, time_interval: int,):
@@ -7,9 +7,9 @@ class BDR:
         self.time_interval = time_interval
         self.availability_factor = self.get_availability_factor()
         self.supply_function = self.get_supply_function()
-        self.supply_bound_function = self.get_supply_bound_function(self.supply_function, time_interval)
+        self.supply_bound_function = self.get_sbfSPR(self.supply_function, time_interval)
         self.partition_delay = self.get_partition_delay()
-        
+        self.sbf_bdr = self.get_sbfBDR()
     def get_availability_factor(self) -> float:
         """
         Calculate the availability factor for a given SRP model.
@@ -82,7 +82,7 @@ class BDR:
         
         return supply_function
 
-    def get_supply_bound_function(self, supply_function: dict[int, list[int]], time_interval: int) -> list[int]:
+    def get_sbfSPR(self, supply_function: dict[int, list[int]], time_interval: int) -> list[int]:
         """
         Calculate the supply bound function for a given supply function.
         
@@ -99,6 +99,19 @@ class BDR:
             supply_bound_function[i] = min([value[i] for value in values])
         return supply_bound_function
     
+    def get_sbfBDR(self) -> list[int]:
+        sbf = []
+        time_interval = np.linspace(0, self.time_interval, 100)
+        print(time_interval)
+        for i in time_interval:
+            value = self.availability_factor*(i - self.partition_delay)
+            if value <= 0:
+                sbf.append(0)
+            else:
+                sbf.append(value)
+        return sbf
+        
+    
     
 if __name__ == "__main__":
     # Example usage
@@ -108,15 +121,16 @@ if __name__ == "__main__":
     print("Availability Factor:", bdr.get_availability_factor())
     print("Partition Delay:", bdr.get_partition_delay())
     print("Supply Function:", bdr.get_supply_function())
-    print("Supply Bound Function:", bdr.get_supply_bound_function(bdr.get_supply_function(), 20))
+    print("Supply Bound Function:", bdr.get_sbfSPR(bdr.get_supply_function(), 20))
     import matplotlib.pyplot as plt
 
     # Plot the supply function
     supply_function = bdr.get_supply_function()
     for end_key, values in supply_function.items():
         plt.plot(range(bdr.time_interval), values, label=f"End Key {end_key}")
-    plt.plot(range(bdr.time_interval), bdr.get_supply_bound_function(supply_function, bdr.time_interval), label="Supply Bound Function", linestyle='--')
+    plt.plot(range(bdr.time_interval), bdr.get_sbfSPR(supply_function, bdr.time_interval), label="Supply Bound Function", linestyle='--')
     plt.plot(bdr.partition_delay, bdr.availability_factor, 'ro', label="Partition Delay")
+    plt.plot(np.linspace(0, 26, 100), bdr.sbf_bdr, label="SBF BDR", linestyle='--')
     plt.title("Supply Function")
     plt.xlabel("Time")
     plt.ylabel("Supply")
