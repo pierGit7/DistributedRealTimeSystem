@@ -8,7 +8,7 @@ from common.task import Task
 from common.csvoutput import TaskResult
 
 class Simulator:
-    def __init__(self, cores:Core, tasks:Task, components:Component):
+    def __init__(self, cores:Core, components:Component, tasks:Task):
         self.cores:list[Core] = cores
         self.tasks:list[Task] = tasks
         self.components:list[Component] = components
@@ -205,7 +205,7 @@ def main():
     for component in components:
         print(component)
 
-    simulator = Simulator(cores, tasks, components)
+    simulator = Simulator(cores, components, tasks)
     simulator.run()
 
 if __name__ == "__main__":

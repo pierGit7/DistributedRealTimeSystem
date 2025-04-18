@@ -80,5 +80,5 @@ def _get_csv_path(csv:str) -> str:
     raise FileNotFoundError(
         f"File {csv} does not exist. "
         "Pass to the function an absolute path or a relative path from the project root. "
-        "For example 'data/testcases/1-tiny-test-case/architecture.csv"
+        "For example 'data/testcases/1-tiny-test-case/architecture.csv", csv
     )
