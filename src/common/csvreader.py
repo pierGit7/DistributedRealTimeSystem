@@ -1,12 +1,13 @@
 import pandas as pd
 import os
 
-from common.architecture import Architecture
-from common.budget import Budget
+from common.core import Core
+from common.component import Component
+from common.task import Task
 from common.scheduler import Scheduler
 from common.utils import get_project_root
 
-def read_architectures(csv:str)-> list[Architecture]:
+def read_cores(csv:str) -> list[Core]:
     """
     Reads the architecture information from a CSV file and returns a list of Architecture objects.
     
@@ -22,8 +23,8 @@ def read_architectures(csv:str)-> list[Architecture]:
 
     architectures = []
     for _, row in df.iterrows():
-        architecture = Architecture(
-            core_id=row['core_id'],
+        architecture = Core(
+            id=row['core_id'],
             speed_factor=row['speed_factor'],
             scheduler=Scheduler[row['scheduler']]
         )
@@ -31,14 +32,14 @@ def read_architectures(csv:str)-> list[Architecture]:
 
     return architectures
 
-def read_budgets(csv:str)-> list[Budget]:
+def read_budgets(csv:str) -> list[Component]:
     csv = _get_csv_path(csv)
 
     df = pd.read_csv(csv)
 
     budgets = []
     for _,row in df.iterrows():
-        budget = Budget(
+        budget = Component(
             component_id=row['component_id'],
             scheduler=Scheduler[row['scheduler']],
             budget=row['budget'],
@@ -49,6 +50,24 @@ def read_budgets(csv:str)-> list[Budget]:
         budgets.append(budget)
 
     return budgets
+
+def read_tasks(csv:str) -> list[Task]:
+    csv = _get_csv_path(csv)
+
+    df = pd.read_csv(csv)
+
+    tasks = []
+    for _,row in df.iterrows():
+        task = Task(
+            task_name=row['task_name'],
+            wcet=row['wcet'],
+            period=row['period'],
+            component_id=row['component_id'],
+            priority=row['priority']
+        )
+        tasks.append(task)
+
+    return tasks
 
 def _get_csv_path(csv:str) -> str:
     if os.path.exists(csv):
