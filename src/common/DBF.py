@@ -10,7 +10,7 @@ class DBF():
     def getDBS(self) -> float: ...
     
 class DBF_EDF(DBF):
-    def __init(self, tasks: list[Task], time_interval: float, explicit_dead_line: float = 0):
+    def __init__(self, tasks: list[Task], time_interval: float, explicit_dead_line: float = 0):
         super().__init__(tasks, time_interval, explicit_dead_line)
         
     def getDBS(self) -> float:
@@ -30,7 +30,7 @@ class DBF_EDF(DBF):
         return dbs
     
 class DBF_FPS(DBF):
-    def __init(self, tasks: list[Task], time_interval: float, task_index: int):
+    def __init__(self, tasks: list[Task], time_interval: float, task_index: int):
         self.task_index = task_index    
         super().__init__(tasks, time_interval)
         
