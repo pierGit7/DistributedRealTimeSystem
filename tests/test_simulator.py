@@ -31,3 +31,4 @@ def test_simulator_tiny_case():
     assert results[1].component_schedulable == True
     assert results[1].avg_response_time == int(33 / 0.62 + 1)
 
+ 

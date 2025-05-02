@@ -1,3 +1,6 @@
+import random as rand
+import numpy as np
+
 from common.csvreader import read_cores
 from common.csvreader import read_budgets
 from common.csvreader import read_tasks
@@ -6,6 +9,8 @@ from common.scheduler import Scheduler
 from common.core import Core
 from common.task import Task
 from common.csvoutput import TaskResult
+
+CLOCK_TICK = 1
 
 class Simulator:
     def __init__(self, cores:Core, components:Component, tasks:Task):
@@ -29,7 +34,10 @@ class Simulator:
             self.task_response_times[task.id] = []
             self.task_deadlines[task.id] = []
 
-        while True:
+        self._generate_execution_time()
+        simulation_iteration = 0
+
+        while simulation_iteration < 1_000:            
             print(f"\nTime step: {t}")
             terminated = True
             
@@ -72,7 +80,7 @@ class Simulator:
                 if task_to_run.remaining_time == task_to_run.wcet:
                     self.task_start_times[task_to_run.id] = t
 
-                task_to_run.remaining_time -= 1  # Simulate task execution
+                task_to_run.remaining_time -= CLOCK_TICK  # Simulate task execution
                 if task_to_run.remaining_time <= 0:
                     # Task completed, remove it from the queue
                     response_time = t + 1 - self.task_start_times[task_to_run.id]
@@ -82,13 +90,14 @@ class Simulator:
                     deadline_met = response_time <= task_to_run.period
                     self.task_deadlines[task_to_run.id].append(deadline_met)
                     
-                    _ = next_component.task_queue.pop(0)
-                next_component.remaining_budget -= 1  # Consume budget
+                    _ = next_component.task_queue.pop(0) # Pop from the head of the queue
+                next_component.remaining_budget -= CLOCK_TICK  # Consume budget
 
             if terminated:
-                break
+                simulation_iteration += 1
+                self._generate_execution_time()
             else:
-                t += 1
+                t += CLOCK_TICK
 
         self.wcet = t
         print("---------------------------------------------------------")
@@ -121,6 +130,58 @@ class Simulator:
             for task in component.task_queue:
                 task.wcet = task.wcet / core.speed_factor
                 task.remaining_time = task.wcet
+
+    def _generate_execution_time(self):
+        """
+        Generate execution time for each task based on its WCET and the speed factor of the core.
+        """
+        for component in self.components:
+            core = next((c for c in self.cores if c.id == component.core_id), None)
+            if not core:
+                continue
+
+            for task in component.task_queue:
+                # Avionics (DO-178C): Typically ≥80% to ensure strict deadline guarantees.
+                lower_bound = task.wcet * 0.8
+                task.remaining_time = self._generate_normal_exec_time(lower_bound, task.wcet)
+
+    def _generate_normal_exec_time(self,wcet, lower_bound):
+        """
+        Generate execution time following a normal distribution bounded between WCET and lower_bound.
+
+        The function uses a normal distribution with:
+        - mean: average of WCET and lower_bound ((wcet + lower_bound)/2)
+        - standard deviation: (wcet - lower_bound)/6 to ensure ~99.7% of values fall within ±3σ
+
+        The while loop ensures the generated execution time stays within the specified bounds
+        by rejecting and regenerating values that fall outside [lower_bound, wcet].
+
+        Parameters
+        ----------
+        wcet : float
+            Worst Case Execution Time - upper bound for execution time
+        lower_bound : float
+            Minimum possible execution time - lower bound
+
+        Returns
+        -------
+        float
+            A randomly generated execution time that follows a normal distribution
+            and falls between lower_bound and wcet inclusive
+
+        Notes
+        -----
+        - Using (wcet - lower_bound)/6 as std dev ensures most values (~99.7%) 
+          fall within the desired range, minimizing rejections in the while loop
+        - The distribution is symmetrical around the mean, creating a bell curve
+          between lower_bound and wcet
+        """
+        mean = (wcet + lower_bound) / 2
+        std_dev = (wcet - lower_bound) / 6
+        while True:  # Ensure value stays within bounds
+            exec_time = np.random.normal(mean, std_dev)
+            if lower_bound <= exec_time <= wcet:
+                return exec_time    
 
     def _is_core_empty(self, core_id):
         """
@@ -182,7 +243,7 @@ class Simulator:
 
 def main():
     # Base path for test case files
-    base_path = 'data/testcases/1-tiny-test-case'
+    base_path = 'data/testcases/3-medium-test-case'
     
     # Read architectures
     architecture_path = f'{base_path}/architecture.csv'
