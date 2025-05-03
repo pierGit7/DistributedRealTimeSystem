@@ -11,6 +11,8 @@ from common.task import Task
 from common.csvoutput import TaskResult
 
 CLOCK_TICK = 1
+SIMULATION_ITERATIONS = 100
+LOWER_BOUND_PERCENTAGE = 1
 
 class Simulator:
     def __init__(self, cores:Core, components:Component, tasks:Task):
@@ -19,10 +21,15 @@ class Simulator:
         self.components:list[Component] = components
         self._fill_component_task_queues()
         self._adjust_task_wcet()
-        self.wcet = 0
+
         self.task_start_times: dict[str, float] = {}  # task_id -> start time
         self.task_response_times: dict[str, list[float]] = {}  # task_id -> list of response times
         self.task_deadlines: dict[str, list[bool]] = {}  # task_id -> list of deadline met flags
+
+        for task in self.tasks:
+            self.task_start_times[task.id] = 0
+            self.task_response_times[task.id] = []
+            self.task_deadlines[task.id] = []
 
     def run(self):
         print("Running simulation...")
@@ -37,7 +44,7 @@ class Simulator:
         self._generate_execution_time()
         simulation_iteration = 0
 
-        while simulation_iteration < 1_000:            
+        while simulation_iteration < SIMULATION_ITERATIONS:            
             print(f"\nTime step: {t}")
             terminated = True
             
@@ -61,9 +68,13 @@ class Simulator:
                 # Get components assigned to this core with remaining budget
                 eligible_components = [
                     c for c in self.components 
-                    if c.core_id == core.id and c.remaining_budget > 0
+                    if c.core_id == core.id and c.remaining_budget > 0 and len(c.task_queue) > 0
                 ]
                 print(f"Eligible components: {[c.id for c in eligible_components]}")
+                if not eligible_components:
+                    print(f"No eligible components for Core {core.id}, skipping...")
+                    continue
+
 
                 if core.scheduler == Scheduler.EDF:
                     next_component = min(eligible_components, key=lambda c: c.period)  # Earliest deadline
@@ -83,27 +94,53 @@ class Simulator:
                 task_to_run.remaining_time -= CLOCK_TICK  # Simulate task execution
                 if task_to_run.remaining_time <= 0:
                     # Task completed, remove it from the queue
-                    response_time = t + 1 - self.task_start_times[task_to_run.id]
+                    response_time = t - self.task_start_times[task_to_run.id]
+                    if response_time == 0:
+                        response_time = CLOCK_TICK
+                    
                     self.task_response_times[task_to_run.id].append(response_time)
                     
                     # Check if completed within period/deadline
-                    deadline_met = response_time <= task_to_run.period
+                    deadline_met = t <= task_to_run.period
                     self.task_deadlines[task_to_run.id].append(deadline_met)
                     
                     _ = next_component.task_queue.pop(0) # Pop from the head of the queue
                 next_component.remaining_budget -= CLOCK_TICK  # Consume budget
 
             if terminated:
+                print("---------------------------------------------------------")
+                print("Iteration ", simulation_iteration, " terminated!")
+                print("---------------------------------------------------------")
                 simulation_iteration += 1
+                t = 0
                 self._generate_execution_time()
+                self._fill_component_task_queues()
             else:
                 t += CLOCK_TICK
 
-        self.wcet = t
         print("---------------------------------------------------------")
         print("Simulation finished. Simulation time:", t)
         print("---------------------------------------------------------")
 
+    def generate_output_file(self, filename: str):
+        """Generate a CSV output file with task simulation results.
+            
+        Args:
+            filename: Path to the output CSV file
+        """
+        task_results = self.get_task_results()
+        
+        # Create CSV file
+        with open(filename, 'w') as f:
+            # Write header
+            f.write("Task,Component,Task Schedulable,Avg Response Time,Max Response Time,Component Schedulable\n")
+            
+            # Write data for each task
+            for result in task_results:
+                f.write(f"{result.task_name},{result.component_id},{result.task_schedulable},"
+                        f"{result.avg_response_time:.2f},{result.max_response_time:.2f},"
+                        f"{result.component_schedulable}\n")
+        
     def _fill_component_task_queues(self):
         for component in self.components:
             # Get tasks assigned to this component
@@ -135,17 +172,12 @@ class Simulator:
         """
         Generate execution time for each task based on its WCET and the speed factor of the core.
         """
-        for component in self.components:
-            core = next((c for c in self.cores if c.id == component.core_id), None)
-            if not core:
-                continue
+        for task in self.tasks:
+            # Avionics (DO-178C): Typically ≥80% to ensure strict deadline guarantees.
+            lower_bound = task.wcet * LOWER_BOUND_PERCENTAGE
+            task.remaining_time = self._generate_normal_exec_time(lower_bound, task.wcet)
 
-            for task in component.task_queue:
-                # Avionics (DO-178C): Typically ≥80% to ensure strict deadline guarantees.
-                lower_bound = task.wcet * 0.8
-                task.remaining_time = self._generate_normal_exec_time(lower_bound, task.wcet)
-
-    def _generate_normal_exec_time(self,wcet, lower_bound):
+    def _generate_normal_exec_time(self,lower_bound, wcet):
         """
         Generate execution time following a normal distribution bounded between WCET and lower_bound.
 
@@ -243,7 +275,7 @@ class Simulator:
 
 def main():
     # Base path for test case files
-    base_path = 'data/testcases/3-medium-test-case'
+    base_path = 'data/testcases/7-unschedulable-test-case'
     
     # Read architectures
     architecture_path = f'{base_path}/architecture.csv'
@@ -268,6 +300,8 @@ def main():
 
     simulator = Simulator(cores, components, tasks)
     simulator.run()
+
+    simulator.generate_output_file("output.csv")
 
 if __name__ == "__main__":
     main()
