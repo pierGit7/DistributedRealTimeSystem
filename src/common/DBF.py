@@ -29,7 +29,7 @@ class DBF_EDF(DBF):
             dbs += (num / task.period) * task.wcet
         return dbs
     
-class DBF_FPS(DBF):
+class DBF_RM(DBF):
     def __init__(self, tasks: list[Task], time_interval: float, task_index: int):
         self.task_index = task_index    
         super().__init__(tasks, time_interval)
