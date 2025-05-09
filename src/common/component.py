@@ -24,4 +24,4 @@ class Component:
         self.core_id = core_id
         self.priority = priority
         self.remaining_budget = budget
-        self.task_queue = []
+        self.jobs_queue = []

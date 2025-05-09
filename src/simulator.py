@@ -8,10 +8,11 @@ from common.component import Component
 from common.scheduler import Scheduler
 from common.core import Core
 from common.task import Task
+from common.job import Job
 from common.csvoutput import TaskResult
 
 CLOCK_TICK = 1
-SIMULATION_ITERATIONS = 1
+SIMULATION_ITERATIONS = 10
 LOWER_BOUND_PERCENTAGE = 1
 
 class Simulator:
@@ -52,13 +53,7 @@ class Simulator:
             # --- Phase 1 Release tasks ---
             for task in self.tasks:
                 if t % task.period == 0:
-                    if t != 0 and task.remaining_time > 0:
-                        self.task_deadlines[task.id].append(False)
-
-                    task.remaining_time = self._generate_execution_time(task)
-                    task.release_time = t
-                    component = next(c for c in self.components if c.id == task.component_id)
-                    self._schedule(t, component, task)
+                    self.release_task(t, task)
 
             # --- Phase 2: Reset budgets ---
             for component in self.components:
@@ -69,7 +64,7 @@ class Simulator:
             for core in self.cores:
                 eligible_components = [
                     c for c in self.components
-                    if c.core_id == core.id and c.remaining_budget > 0 and len(c.task_queue) > 0
+                    if c.core_id == core.id and c.remaining_budget > 0 and len(c.jobs_queue) > 0
                 ]
 
                 if not eligible_components:
@@ -78,28 +73,25 @@ class Simulator:
                 if core.scheduler == Scheduler.EDF:
                     next_component = min(
                         eligible_components,
-                        key=lambda c: self._get_task_absolute_deadline(t, c.task_queue[0])
+                        key=lambda c: c.jobs_queue[0].absolute_deadline
                     )
                 elif core.scheduler == Scheduler.RM:
                     next_component = min(eligible_components, key=lambda c: c.priority)
                 else:
                     next_component = None
 
-                task_to_run = next_component.task_queue[0]
+                job_to_run = next_component.jobs_queue[0]
 
-                if task_to_run.remaining_time == task_to_run.wcet:
-                    self.task_start_times[task_to_run.id] = t
+                if job_to_run.remaining_time == job_to_run.execution_time:
+                    job_to_run.start_time = t
 
-                task_to_run.remaining_time -= CLOCK_TICK
-                if task_to_run.remaining_time <= 0:
-                    response_time = (t + CLOCK_TICK) - self.task_start_times[task_to_run.id]
-                    if response_time == 0:
-                        response_time = CLOCK_TICK
-
-                    self.task_response_times[task_to_run.id].append(response_time)
-                    self.task_deadlines[task_to_run.id].append(True)
-
-                    _ = next_component.task_queue.pop(0)
+                job_to_run.remaining_time -= CLOCK_TICK
+                
+                if job_to_run.remaining_time <= 0:
+                    response_time = (t + CLOCK_TICK) - job_to_run.start_time
+                    self.task_response_times[job_to_run.task_id].append(response_time)
+                    self.task_deadlines[job_to_run.task_id].append(t <= job_to_run.absolute_deadline)
+                    _ = next_component.jobs_queue.pop(0)
                 next_component.remaining_budget -= CLOCK_TICK
 
             if t != 0 and t % hyperperiod == 0:
@@ -137,6 +129,26 @@ class Simulator:
                         f"{result.avg_response_time:.2f},{result.max_response_time:.2f},"
                         f"{result.component_schedulable}\n")
 
+    def _release_jobs_if_due(self, current_time: int):
+        """
+        Checks all task templates and releases new jobs if their period is met.
+        Args:
+            current_time: The current simulation time (t).
+        """
+        for task in self.tasks: # self.tasks stores Task templates
+            if current_time % task.period == 0:
+                # 1. Get the component for this task template
+                component = next(
+                    (c for c in self.components if c.id == task.component_id),
+                    None
+                )
+                if not component:
+                    raise(f"Warning: Component {task.component_id} not found for task {task.id}")
+
+                actual_execution_time = self._generate_execution_time(task)
+                new_job = Job(task, current_time, actual_execution_time)
+                self._schedule(component, new_job) # Assuming _schedule_job takes (Component, Job)
+
     def _adjust_task_wcet(self):
         """
         Adjust the WCET of tasks based on the speed factor of the core they are assigned to.
@@ -159,7 +171,7 @@ class Simulator:
         Clear the task queues of all components.
         """
         for component in self.components:
-            component.task_queue.clear()
+            component.jobs_queue.clear()
             component.remaining_budget = component.budget
 
     def _generate_execution_time(self, task:Task):
@@ -219,12 +231,31 @@ class Simulator:
             bool: True if no tasks remain for any component on this core, False otherwise
         """
         return all(
-            len(component.task_queue) == 0
+            len(component.jobs_queue) == 0
             for component in self.components
             if component.core_id == core_id
         )
 
-    def _schedule(self, current_time: int, component: Component, task: Task):
+    def release_task(self, t: int, task: Task):
+        """Releases a single task if its period is met."""
+        component = next(c for c in self.components if c.id == task.component_id)
+        existing_job = next(
+            (j for j in component.jobs_queue if j.task_id == task.id),
+            None
+        )
+        if existing_job:
+            self.task_deadlines[task.id].append(
+                t <= existing_job.absolute_deadline and
+                existing_job.remaining_time <= 0
+            )
+            
+        execution_time = self._generate_execution_time(task)
+        job = Job(task, t, execution_time)
+        job.release_time = t
+        # component = next(c for c in self.components if c.id == task.component_id) # Already found
+        self._schedule(t, component, job)
+
+    def _schedule(self, current_time: int, component: Component, job: Job):
         """
         Schedule the tasks for a given component based on its scheduling policy.
         First removes any existing instance of the task from queue before scheduling new instance.
@@ -235,27 +266,27 @@ class Simulator:
             task: Task to be scheduled
         """
         # Remove existing instance of task if present
-        component.task_queue = [t for t in component.task_queue if t.id != task.id]
+        component.jobs_queue = [j for j in component.jobs_queue if j.task_id != job.task_id]
 
         insert_idx = 0
         match component.scheduler:
             case Scheduler.RM:
                 # Rate Monotonic: Insert based on priority (lower value = higher priority)
-                for idx, queue_task in enumerate(component.task_queue):
-                    if task.priority > queue_task.priority:
+                for idx, queue_job in enumerate(component.jobs_queue):
+                    if job.priority > queue_job.priority:
                         insert_idx = idx + 1
             case Scheduler.EDF:
-                deadline_new = self._get_task_absolute_deadline(current_time, task)
+                deadline_new = job.absolute_deadline
                 
                 insert_idx = 0
-                for idx, queue_task in enumerate(component.task_queue):
-                    deadline_queued = self._get_task_absolute_deadline(current_time, queue_task)
+                for idx, queue_job in enumerate(component.jobs_queue):
+                    deadline_queued = queue_job.absolute_deadline
                     if deadline_new > deadline_queued:
                         insert_idx = idx + 1
             case _:
                 raise ValueError(f"Unknown scheduling policy: {component.scheduler}")
 
-        component.task_queue.insert(insert_idx, task)
+        component.jobs_queue.insert(insert_idx, job)
 
     def get_task_results(self) -> list[TaskResult]:
         """Get the simulation results for all tasks.
@@ -336,24 +367,9 @@ class Simulator:
 
         return system_hyperperiod
 
-    def _get_task_absolute_deadline(self, t: int, task: Task) -> float:
-        """Calculate the absolute deadline for a task at current time.
-        Uses remaining execution time as a tie-breaker (shorter remaining time gets priority).
-
-        Args:
-            t: Current simulation time
-            task: Task to calculate deadline for
-
-        Returns:
-            float: Absolute deadline for the task plus a small factor for remaining time
-        """
-        absolute_deadline = task.release_time + task.period
-        tie_breaker = task.remaining_time * 0.0001  # Small factor to break ties
-        return absolute_deadline + tie_breaker
-
 def main():
     # Base path for test case files
-    base_path = 'data/custom/16-large-onecore'
+    base_path = 'data/testcases/4-large-test-case'
     # base_path = 'data/testcases/4-large-test-case'
 
     # Read architectures
