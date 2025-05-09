@@ -6,7 +6,7 @@ class Job:
         self.release_time: int = release_time
         self.execution_time: float = execution_time
         self.remaining_time: float = execution_time
-        self.absolute_deadline: int = release_time + task.period
+        self.absolute_deadline: int = release_time + task.period + self.execution_time * 0.0001 # Tie-breaker
         self.start_time: int = -1
 
     # Make it sortable for priority queues if needed (e.g., for EDF)
