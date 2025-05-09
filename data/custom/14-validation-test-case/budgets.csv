@@ -1,0 +1,3 @@
+component_id,scheduler,budget,period,core_id,priority
+CompA,EDF,3,6,C1,1
+CompB,EDF,2,6,C1,1

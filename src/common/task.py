@@ -5,7 +5,7 @@ class Task:
         self.period = period
         self.component_id = component_id
         self.priority = priority
-
+        self.release_time = 0
         self.remaining_time = self.wcet
         
 

@@ -11,7 +11,7 @@ from common.task import Task
 from common.csvoutput import TaskResult
 
 CLOCK_TICK = 1
-SIMULATION_ITERATIONS = 100
+SIMULATION_ITERATIONS = 1
 LOWER_BOUND_PERCENTAGE = 1
 
 class Simulator:
@@ -19,7 +19,6 @@ class Simulator:
         self.cores:list[Core] = cores
         self.tasks:list[Task] = tasks
         self.components:list[Component] = components
-        self._fill_component_task_queues()
         self._adjust_task_wcet()
 
         self.task_start_times: dict[str, float] = {}  # task_id -> start time
@@ -35,125 +34,108 @@ class Simulator:
         print("Running simulation...")
 
         t = 0  # Simulation time in us
-        
+
         # Initialize response time tracking
         for task in self.tasks:
             self.task_response_times[task.id] = []
             self.task_deadlines[task.id] = []
 
-        self._generate_execution_time()
         simulation_iteration = 0
+        hyperperiod = self._get_hyperperiod()
 
-        while simulation_iteration < SIMULATION_ITERATIONS:            
-            print(f"\nTime step: {t}")
-            terminated = True
-            
-            # --- Phase 1: Reset budgets for components whose period renews at time `t` ---
+        while simulation_iteration < SIMULATION_ITERATIONS:
+            # Progress tracking every 10,000 iterations
+            if t % 10_000 == 0:
+                progress = (t % hyperperiod) / hyperperiod * 100
+                print(f"Time: {t}, Progress: {progress:.2f}%")
+
+            # --- Phase 1 Release tasks ---
+            for task in self.tasks:
+                if t % task.period == 0:
+                    if t != 0 and task.remaining_time > 0:
+                        self.task_deadlines[task.id].append(False)
+
+                    task.remaining_time = self._generate_execution_time(task)
+                    task.release_time = t
+                    component = next(c for c in self.components if c.id == task.component_id)
+                    self._schedule(t, component, task)
+
+            # --- Phase 2: Reset budgets ---
             for component in self.components:
                 if t % component.period == 0:
-                    print(f"Replenishing budget for component {component.id} to {component.budget}")
-                    component.remaining_budget = component.budget  # Replenish
+                    component.remaining_budget = component.budget
 
-            # --- Phase 2: Core-level scheduling (pick which component runs) ---
+            # --- Phase 3: Core-level scheduling ---
             for core in self.cores:
-                if self._is_core_empty(core.id):
-                    print(f"Core {core.id} has no more assigned task, skipping...")
-                    continue
-
-                terminated = False
-
-                print(f"\nScheduling for Core {core.id}:")
-
-                
-                # Get components assigned to this core with remaining budget
                 eligible_components = [
-                    c for c in self.components 
+                    c for c in self.components
                     if c.core_id == core.id and c.remaining_budget > 0 and len(c.task_queue) > 0
                 ]
-                print(f"Eligible components: {[c.id for c in eligible_components]}")
+
                 if not eligible_components:
-                    print(f"No eligible components for Core {core.id}, skipping...")
                     continue
 
-
                 if core.scheduler == Scheduler.EDF:
-                    next_component = min(eligible_components, key=lambda c: c.period)  # Earliest deadline
+                    next_component = min(
+                        eligible_components,
+                        key=lambda c: self._get_task_absolute_deadline(t, c.task_queue[0])
+                    )
                 elif core.scheduler == Scheduler.RM:
-                    next_component = min(eligible_components, key=lambda c: c.priority)  # Highest priority
+                    next_component = min(eligible_components, key=lambda c: c.priority)
                 else:
-                    next_component = None  # No valid scheduler found
-                
-                print(f"Selected component {next_component.id} for execution")
-                task_to_run = next_component.task_queue[0]  # Get highest-priority task without removing
-                print(f"Running task {task_to_run.id}, remaining time: {task_to_run.remaining_time}")
-                
-                # Track start time when task begins
+                    next_component = None
+
+                task_to_run = next_component.task_queue[0]
+
                 if task_to_run.remaining_time == task_to_run.wcet:
                     self.task_start_times[task_to_run.id] = t
 
-                task_to_run.remaining_time -= CLOCK_TICK  # Simulate task execution
+                task_to_run.remaining_time -= CLOCK_TICK
                 if task_to_run.remaining_time <= 0:
-                    # Task completed, remove it from the queue
-                    response_time = t - self.task_start_times[task_to_run.id]
+                    response_time = (t + CLOCK_TICK) - self.task_start_times[task_to_run.id]
                     if response_time == 0:
                         response_time = CLOCK_TICK
-                    
-                    self.task_response_times[task_to_run.id].append(response_time)
-                    
-                    # Check if completed within period/deadline
-                    deadline_met = t <= task_to_run.period
-                    self.task_deadlines[task_to_run.id].append(deadline_met)
-                    
-                    _ = next_component.task_queue.pop(0) # Pop from the head of the queue
-                next_component.remaining_budget -= CLOCK_TICK  # Consume budget
 
-            if terminated:
-                print("---------------------------------------------------------")
-                print("Iteration ", simulation_iteration, " terminated!")
-                print("---------------------------------------------------------")
+                    self.task_response_times[task_to_run.id].append(response_time)
+                    self.task_deadlines[task_to_run.id].append(True)
+
+                    _ = next_component.task_queue.pop(0)
+                next_component.remaining_budget -= CLOCK_TICK
+
+            if t != 0 and t % hyperperiod == 0:
+                print(f"\nIteration {simulation_iteration} completed!")
+                print(f"Summary:")
+                print(f"- Total time steps: {t}")
+                print(f"- Hyperperiod: {hyperperiod}")
+                print("-" * 50)
                 simulation_iteration += 1
                 t = 0
-                self._generate_execution_time()
-                self._fill_component_task_queues()
+                self._clear_component_queues()
             else:
                 t += CLOCK_TICK
 
-        print("---------------------------------------------------------")
-        print("Simulation finished. Simulation time:", t)
-        print("---------------------------------------------------------")
+        print("-" * 50)
+        print(f"Simulation finished. Total simulation time: {t}")
+        print("-" * 50)
 
     def generate_output_file(self, filename: str):
         """Generate a CSV output file with task simulation results.
-            
+
         Args:
             filename: Path to the output CSV file
         """
         task_results = self.get_task_results()
-        
+
         # Create CSV file
         with open(filename, 'w') as f:
             # Write header
             f.write("Task,Component,Task Schedulable,Avg Response Time,Max Response Time,Component Schedulable\n")
-            
+
             # Write data for each task
             for result in task_results:
                 f.write(f"{result.task_name},{result.component_id},{result.task_schedulable},"
                         f"{result.avg_response_time:.2f},{result.max_response_time:.2f},"
                         f"{result.component_schedulable}\n")
-        
-    def _fill_component_task_queues(self):
-        for component in self.components:
-            # Get tasks assigned to this component
-            tasks_for_component = [
-                task for task in self.tasks if task.component_id == component.id
-            ]
-            
-            if component.scheduler == "RM":
-                tasks_for_component.sort(key=lambda t: t.priority)
-            else:
-                tasks_for_component.sort(key=lambda t: t.period)
-
-            component.task_queue = tasks_for_component
 
     def _adjust_task_wcet(self):
         """
@@ -164,18 +146,29 @@ class Simulator:
             if not core:
                 continue
 
-            for task in component.task_queue:
+            for task in self.tasks:
+                if task.component_id != component.id:
+                    continue
+
+                # Adjust WCET based on the speed factor of the core
                 task.wcet = task.wcet / core.speed_factor
                 task.remaining_time = task.wcet
 
-    def _generate_execution_time(self):
+    def _clear_component_queues(self):
+        """
+        Clear the task queues of all components.
+        """
+        for component in self.components:
+            component.task_queue.clear()
+            component.remaining_budget = component.budget
+
+    def _generate_execution_time(self, task:Task):
         """
         Generate execution time for each task based on its WCET and the speed factor of the core.
         """
-        for task in self.tasks:
-            # Avionics (DO-178C): Typically ≥80% to ensure strict deadline guarantees.
-            lower_bound = task.wcet * LOWER_BOUND_PERCENTAGE
-            task.remaining_time = self._generate_normal_exec_time(lower_bound, task.wcet)
+        # Avionics (DO-178C): Typically ≥80% to ensure strict deadline guarantees.
+        lower_bound = task.wcet * LOWER_BOUND_PERCENTAGE
+        return self._generate_normal_exec_time(lower_bound, task.wcet)
 
     def _generate_normal_exec_time(self,lower_bound, wcet):
         """
@@ -203,7 +196,7 @@ class Simulator:
 
         Notes
         -----
-        - Using (wcet - lower_bound)/6 as std dev ensures most values (~99.7%) 
+        - Using (wcet - lower_bound)/6 as std dev ensures most values (~99.7%)
           fall within the desired range, minimizing rejections in the while loop
         - The distribution is symmetrical around the mean, creating a bell curve
           between lower_bound and wcet
@@ -213,27 +206,60 @@ class Simulator:
         while True:  # Ensure value stays within bounds
             exec_time = np.random.normal(mean, std_dev)
             if lower_bound <= exec_time <= wcet:
-                return exec_time    
+                return exec_time
 
     def _is_core_empty(self, core_id):
         """
         Check if all components assigned to the specified core have empty task queues.
-        
+
         Args:
             core_id: The ID of the core to check
-            
+
         Returns:
             bool: True if no tasks remain for any component on this core, False otherwise
         """
         return all(
             len(component.task_queue) == 0
-            for component in self.components 
+            for component in self.components
             if component.core_id == core_id
         )
 
+    def _schedule(self, current_time: int, component: Component, task: Task):
+        """
+        Schedule the tasks for a given component based on its scheduling policy.
+        First removes any existing instance of the task from queue before scheduling new instance.
+
+        Args:
+            current_time: Current simulation time
+            component: The component whose tasks are to be scheduled
+            task: Task to be scheduled
+        """
+        # Remove existing instance of task if present
+        component.task_queue = [t for t in component.task_queue if t.id != task.id]
+
+        insert_idx = 0
+        match component.scheduler:
+            case Scheduler.RM:
+                # Rate Monotonic: Insert based on priority (lower value = higher priority)
+                for idx, queue_task in enumerate(component.task_queue):
+                    if task.priority > queue_task.priority:
+                        insert_idx = idx + 1
+            case Scheduler.EDF:
+                deadline_new = self._get_task_absolute_deadline(current_time, task)
+                
+                insert_idx = 0
+                for idx, queue_task in enumerate(component.task_queue):
+                    deadline_queued = self._get_task_absolute_deadline(current_time, queue_task)
+                    if deadline_new > deadline_queued:
+                        insert_idx = idx + 1
+            case _:
+                raise ValueError(f"Unknown scheduling policy: {component.scheduler}")
+
+        component.task_queue.insert(insert_idx, task)
+
     def get_task_results(self) -> list[TaskResult]:
         """Get the simulation results for all tasks.
-        
+
         Returns:
             List[TaskResult]: Results for each task including response times and schedulability.
         """
@@ -241,7 +267,7 @@ class Simulator:
         for task in self.tasks:
             response_times = self.task_response_times.get(task.id, [])
             deadline_flags = self.task_deadlines.get(task.id, [])
-            
+
             if response_times:
                 avg_response = sum(response_times) / len(response_times)
                 max_response = max(response_times)
@@ -251,17 +277,17 @@ class Simulator:
                 avg_response = 0.0
                 max_response = 0.0
                 task_schedulable = False
-            
+
             # Get component for this task
             component = next(c for c in self.components if c.id == task.component_id)
-            
+
             # A component is schedulable if all its tasks are schedulable
             component_tasks = [t for t in self.tasks if t.component_id == component.id]
             component_schedulable = all(
-                all(self.task_deadlines.get(t.id, [])) 
+                all(self.task_deadlines.get(t.id, []))
                 for t in component_tasks
             )
-            
+
             results.append(TaskResult(
                 task_name=task.id,
                 component_id=task.component_id,
@@ -270,27 +296,80 @@ class Simulator:
                 max_response_time=max_response,
                 component_schedulable=component_schedulable
             ))
-        
+
         return results
+
+    def _get_hyperperiod(self):
+        """Calculate the system hyperperiod hierarchically.
+        First calculates the hyperperiod (LCM) of tasks within each component,
+        then calculates the LCM of all component hyperperiods.
+
+        Example:
+            Component1 has tasks with periods [2,3]  -> LCM = 6
+            Component2 has tasks with periods [2,4]  -> LCM = 4
+            System hyperperiod = LCM(6,4) = 12
+
+        Returns:
+            int: The hyperperiod value for the entire system
+        """
+        # Calculate hyperperiod for each component
+        component_hyperperiods = []
+        for component in self.components:
+            # Get all tasks for this component
+            component_tasks = [task for task in self.tasks if task.component_id == component.id]
+            if not component_tasks:
+                # If component has no tasks, use its own period
+                component_hyperperiods.append(component.period)
+                continue
+
+            # Calculate LCM of task periods within this component
+            task_periods = [task.period for task in component_tasks]
+            component_lcm = task_periods[0]
+            for period in task_periods[1:]:
+                component_lcm = (component_lcm * period) // np.gcd(component_lcm, period)
+            component_hyperperiods.append(component_lcm)
+
+        # Calculate system hyperperiod as LCM of component hyperperiods
+        system_hyperperiod = component_hyperperiods[0]
+        for period in component_hyperperiods[1:]:
+            system_hyperperiod = (system_hyperperiod * period) // np.gcd(system_hyperperiod, period)
+
+        return system_hyperperiod
+
+    def _get_task_absolute_deadline(self, t: int, task: Task) -> float:
+        """Calculate the absolute deadline for a task at current time.
+        Uses remaining execution time as a tie-breaker (shorter remaining time gets priority).
+
+        Args:
+            t: Current simulation time
+            task: Task to calculate deadline for
+
+        Returns:
+            float: Absolute deadline for the task plus a small factor for remaining time
+        """
+        absolute_deadline = task.release_time + task.period
+        tie_breaker = task.remaining_time * 0.0001  # Small factor to break ties
+        return absolute_deadline + tie_breaker
 
 def main():
     # Base path for test case files
-    base_path = 'data/testcases/7-unschedulable-test-case'
-    
+    base_path = 'data/custom/16-large-onecore'
+    # base_path = 'data/testcases/4-large-test-case'
+
     # Read architectures
     architecture_path = f'{base_path}/architecture.csv'
     cores = read_cores(architecture_path)
     print("Architectures:")
     for core in cores:
         print(core)
-    
+
     # Read tasks
     tasks_path = f'{base_path}/tasks.csv'
     tasks = read_tasks(tasks_path)
     print("\nTasks:")
     for task in tasks:
         print(task)
-    
+
     # Read components
     budgets_path = f'{base_path}/budgets.csv'
     components = read_budgets(budgets_path)

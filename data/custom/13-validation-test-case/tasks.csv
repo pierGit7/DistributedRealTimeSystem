@@ -1,0 +1,4 @@
+task_name,wcet,period,component_id,priority
+T1,1,3,CompA,
+T2,1,3,CompA,
+T3,2,6,CompA,
