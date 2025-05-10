@@ -5,3 +5,4 @@ tests/.tmp
 __pycache__
 .vscode
 .ruff_cache
+solution.csv

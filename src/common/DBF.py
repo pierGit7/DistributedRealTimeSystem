@@ -1,53 +1,46 @@
-from abc import ABC, abstractmethod
-from common.task import Task
+# common/DBF.py
 
-class DBF():
-    def __init__(self, tasks: list[Task], time_interval: float, explicit_dead_line: float = 0):
-        self.explicit_dead_line = explicit_dead_line
-        self.tasks = tasks
-        self.time_interval = time_interval
-    @abstractmethod
-    def getDBS(self) -> float: ...
-    
-class DBF_EDF(DBF):
-    def __init__(self, tasks: list[Task], time_interval: float, explicit_dead_line: float = 0):
-        super().__init__(tasks, time_interval, explicit_dead_line)
-        
-    def getDBS(self) -> float:
+import math
+from typing import Sequence
+
+class DBF:
+    @staticmethod
+    def dbf_edf(tasks: Sequence, interval: float) -> float:
         """
-        Calculate the Demand Bound Function (DBF) for a set of tasks.
-        The DBF is computed as the sum of the workload contributions of all tasks
-        within a specified time interval. Each task contributes to the DBF based
-        on its worst-case execution time (WCET) and period.
-        Returns:
-            float: The computed DBF value for the set of tasks.
+        Demand Bound Function under EDF for implicit-deadline tasks:
+            dbfEDF(W, interval) = sum(floor(interval / period) * wcet)
         """
-        
-        dbs: float = 0
-        for task in self.tasks:
-            num = (self.time_interval + (task.period * self.explicit_dead_line) - self.explicit_dead_line)
-            dbs += (num / task.period) * task.wcet
-        return dbs
-    
-class DBF_RM(DBF):
-    def __init__(self, tasks: list[Task], time_interval: float, task_index: int):
-        self.task_index = task_index    
-        super().__init__(tasks, time_interval)
-        
-    def getDBS(self) -> float:
+        total_demand = 0.0
+        for task in tasks:
+            executions = math.floor(interval / task.period)
+            total_demand += executions * task.wcet
+        return total_demand
+
+    @staticmethod
+    def dbf_edf_explicit(tasks: Sequence, interval: float) -> float:
         """
-        Calculate the Demand Bound Function (DBF) for a set of tasks.
-        The DBF is computed as the sum of the workload contributions of all tasks
-        within a specified time interval. Each task contributes to the DBF based
-        on its worst-case execution time (WCET) and period.
-        Returns:
-            float: The computed DBF value for the set of tasks.
+        Demand Bound Function under EDF for explicit-deadline tasks:
+            dbfEDF(W, interval) = sum(floor((interval + period - deadline) / period) * wcet)
         """
-        
-        my_task = self.tasks[self.task_index]
-        higher_priority_tasks = [task for task in self.tasks if task.priority > self.tasks[self.task_index].priority]
-        dbs: float = my_task.wcet
-        for task in higher_priority_tasks:
-            dbs += (self.time_interval / task.period) * task.wcet
-        return dbs
-    
+        total_demand = 0.0
+        for task in tasks:
+            deadline = getattr(task, 'deadline', task.period)
+            job_count = math.floor((interval + task.period - deadline) / task.period)
+            if job_count > 0:
+                total_demand += job_count * task.wcet
+        return total_demand
+
+    @staticmethod
+    def dbf_rm(tasks: Sequence, interval: float, index: int) -> float:
+        """
+        Demand Bound Function under RM/DM for the task at 'index':
+            dbfRM(W, interval, i) = wcet_i + sum(ceil(interval / period_k) * wcet_k)
+            for all tasks k with higher priority (lower index).
+        """
+        # demand from the task itself
+        demand = tasks[index].wcet
+        # plus interference from all higher-priority tasks
+        for higher in tasks[:index]:
+            invocations = math.ceil(interval / higher.period)
+            demand += invocations * higher.wcet
+        return demand
