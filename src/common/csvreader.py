@@ -61,8 +61,8 @@ def read_tasks(csv:str)-> list[Task]:
     for _,row in df.iterrows():
         task = Task(
             task_name=row['task_name'],
-            wcet=row['wcet'],
-            period=row['period'],
+            wcet=(row['wcet']),
+            period=(row['period']),
             component_id=row['component_id'],
             priority=row['priority'],
         )
@@ -83,12 +83,6 @@ def read_csv() -> tuple[list[Architecture], list[Budget], list[Task]]:
         architectures = read_architectures(architecture_file)
         budgets = read_budgets(budget_file)
         tasks = read_tasks(tasks_file)
-        
-        print(f"Successfully read architectures: {architectures}")
-        print(f"Successfully read budgets: {budgets}")
-        print(f"Successfully read tasks: {tasks}")
-        
-        # Add your analysis code here
         
     except FileNotFoundError as e:
         print(f"Error: File not found - {e}")

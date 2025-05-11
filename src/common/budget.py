@@ -6,7 +6,7 @@ from common.scheduler import Scheduler
 class Budget:
     component_id: str
     scheduler:Scheduler
-    budget:int
-    period:int
+    budget:float
+    period:float
     core_id:int
     priority:int|None
