@@ -1,8 +1,6 @@
 .DS_Store
 tests/.tmp
 .pytest_cache
-.vscode
 __pycache__
-.vscode
 .ruff_cache
 solution.csv
