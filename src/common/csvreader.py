@@ -83,3 +83,26 @@ def _get_csv_path(csv:str) -> str:
         "Pass to the function an absolute path or a relative path from the project root. "
         "For example 'data/testcases/1-tiny-test-case/architecture.csv", csv
     )
+
+def read_csv() -> tuple[list[Core], list[Component], list[Task]]:
+    if len(sys.argv) != 4:
+        print("Usage: python analysis.py <architecture.csv> <budget.csv> <tasks.csv>")
+        sys.exit(1)
+
+    architecture_file = sys.argv[1]
+    budget_file = sys.argv[2]
+    tasks_file = sys.argv[3]
+
+    try:
+        architectures = read_cores(architecture_file)
+        budgets = read_budgets(budget_file)
+        tasks = read_tasks(tasks_file)
+        
+    except FileNotFoundError as e:
+        print(f"Error: File not found - {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error processing files: {e}")
+        sys.exit(1)
+
+    return architectures, budgets, tasks
