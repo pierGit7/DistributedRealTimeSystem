@@ -1,0 +1,126 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: 1-tiny-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/1-tiny-test-case/architecture.csv",
+                "data/testcases/1-tiny-test-case/budgets.csv",
+                "data/testcases/1-tiny-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 2-small-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/2-small-test-case/architecture.csv",
+                "data/testcases/2-small-test-case/budgets.csv",
+                "data/testcases/2-small-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 3-medium-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/3-medium-test-case/architecture.csv",
+                "data/testcases/3-medium-test-case/budgets.csv",
+                "data/testcases/3-medium-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 4-large-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/4-large-test-case/architecture.csv",
+                "data/testcases/4-large-test-case/budgets.csv",
+                "data/testcases/4-large-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 5-huge-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/5-huge-test-case/architecture.csv",
+                "data/testcases/5-huge-test-case/budgets.csv",
+                "data/testcases/5-huge-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 6-gigantic-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/6-gigantic-test-case/architecture.csv",
+                "data/testcases/6-gigantic-test-case/budgets.csv",
+                "data/testcases/6-gigantic-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 7-unschedulable-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/7-unschedulable-test-case/architecture.csv",
+                "data/testcases/7-unschedulable-test-case/budgets.csv",
+                "data/testcases/7-unschedulable-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 8-unschedulable-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/8-unschedulable-test-case/architecture.csv",
+                "data/testcases/8-unschedulable-test-case/budgets.csv",
+                "data/testcases/8-unschedulable-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 9-unschedulable-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/9-unschedulable-test-case/architecture.csv",
+                "data/testcases/9-unschedulable-test-case/budgets.csv",
+                "data/testcases/9-unschedulable-test-case/tasks.csv"
+            ]
+        },
+        {
+            "name": "Python Debugger: 10-unschedulable-test-case",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/analysis.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/testcases/10-unschedulable-test-case/architecture.csv",
+                "data/testcases/10-unschedulable-test-case/budgets.csv",
+                "data/testcases/10-unschedulable-test-case/tasks.csv"
+            ]
+        }
+
+    ]
+}
