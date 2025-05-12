@@ -161,7 +161,7 @@ def output_report(components, core_summary):
         print(f"Core {core_id}: {core_stat}")
 
 
-def write_solution_csv(tasks, components, filename='solution.csv'):  # noqa: E302(tasks, components, filename='solution.csv'):(tasks, components, filename='solution.csv'):
+def write_solution_csv(tasks, components, filename='analysis_solution.csv'): 
     # CSV with task- and component-level results
     rows = []
     for cid, comp in components.items():

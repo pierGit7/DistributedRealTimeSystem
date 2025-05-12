@@ -86,7 +86,8 @@ def _get_csv_path(csv:str) -> str:
 
 def read_csv() -> tuple[list[Core], list[Component], list[Task]]:
     if len(sys.argv) != 4:
-        print("Usage: python analysis.py <architecture.csv> <budget.csv> <tasks.csv>")
+        script_name = os.path.basename(sys.argv[0])
+        print(f"Usage: python {script_name} <architecture.csv> <budget.csv> <tasks.csv>")
         sys.exit(1)
 
     architecture_file = sys.argv[1]

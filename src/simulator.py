@@ -1,9 +1,7 @@
 import random as rand
 import numpy as np
 
-from common.csvreader import read_cores
-from common.csvreader import read_budgets
-from common.csvreader import read_tasks
+from common.csvreader import read_csv
 from common.component import Component
 from common.scheduler import Scheduler
 from common.core import Core
@@ -368,34 +366,12 @@ class Simulator:
         return system_hyperperiod
 
 def main():
-    # Base path for test case files
-    base_path = 'data/testcases/10-unschedulable-test-case'
-
-    # Read architectures
-    architecture_path = f'{base_path}/architecture.csv'
-    cores = read_cores(architecture_path)
-    print("Architectures:")
-    for core in cores:
-        print(core)
-
-    # Read tasks
-    tasks_path = f'{base_path}/tasks.csv'
-    tasks = read_tasks(tasks_path)
-    print("\nTasks:")
-    for task in tasks:
-        print(task)
-
-    # Read components
-    budgets_path = f'{base_path}/budgets.csv'
-    components = read_budgets(budgets_path)
-    print("\nBudgets:")
-    for component in components:
-        print(component)
+    cores, components, tasks = read_csv()
 
     simulator = Simulator(cores, components, tasks)
     simulator.run()
 
-    simulator.generate_output_file("output.csv")
+    simulator.generate_output_file("simulation_solution.csv")
 
 if __name__ == "__main__":
     main()
