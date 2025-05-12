@@ -1,0 +1,11 @@
+task_name,wcet,period,component_id,priority
+Task_12,8,100,Lidar_Sensor,1
+Task_13,9,90,Lidar_Sensor,0
+Task_14,6,300,Lidar_Sensor,2
+Task_15,23,900,Lidar_Sensor,3
+Task_16,2,200,Control_Unit,
+Task_17,7,80,Control_Unit,
+Task_18,4,800,Control_Unit,
+Task_19,12,100,Control_Unit,
+Task_20,37,300,Control_Unit,
+Task_21,4,50,Control_Unit,

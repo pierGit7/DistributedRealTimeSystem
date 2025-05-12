@@ -1,0 +1,3 @@
+component_id,scheduler,budget,period,core_id,priority
+Lidar_Sensor,RM,1,3,Core_2,
+Control_Unit,EDF,6,9,Core_2,

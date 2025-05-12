@@ -1,0 +1,22 @@
+Task,Component,Task Schedulable,Avg Response Time,Max Response Time,Component Schedulable
+Task_0,Camera_Sensor,True,44.00,49.00,True
+Task_1,Camera_Sensor,True,1.00,1.00,True
+Task_2,Camera_Sensor,True,5.00,5.00,True
+Task_3,Camera_Sensor,True,211.00,211.00,True
+Task_4,Image_Processor,True,1.00,1.00,True
+Task_5,Image_Processor,True,2.00,2.00,True
+Task_6,Lidar_Sensor,False,24.10,26.00,False
+Task_7,Lidar_Sensor,False,2.00,2.00,False
+Task_8,Lidar_Sensor,False,140.00,140.00,False
+Task_9,Lidar_Sensor,False,0.00,0.00,False
+Task_10,Lidar_Sensor,False,0.00,0.00,False
+Task_11,Lidar_Sensor,False,2.00,2.00,False
+Task_12,GPS_Sensor,True,4.42,5.00,True
+Task_13,GPS_Sensor,True,41.00,41.00,True
+Task_14,Communication_Unit,True,3.92,8.00,True
+Task_15,Communication_Unit,True,76.21,77.00,True
+Task_16,Communication_Unit,True,5.42,15.00,True
+Task_17,Communication_Unit,True,3.69,13.00,True
+Task_18,Proximity_Sensor,True,34.00,36.00,True
+Task_19,Proximity_Sensor,True,228.25,229.00,True
+Task_20,Proximity_Sensor,True,1.00,1.00,True

@@ -16,8 +16,8 @@ def lcm(a: int, b: int) -> int:
 
 def adjust_wcet(tasks, budgets, architectures):
     # Adjust WCET by core speed factor (scaling per architecture)
-    core_speed_map = {arch.core_id: arch.speed_factor for arch in architectures}
-    component_core_map = {budget.component_id: budget.core_id for budget in budgets}
+    core_speed_map = {arch.id: arch.speed_factor for arch in architectures}
+    component_core_map = {budget.id: budget.core_id for budget in budgets}
     for task in tasks:
         core_id = component_core_map[task.component_id]
         task.wcet = task.wcet / core_speed_map[core_id]
@@ -28,7 +28,7 @@ def group_tasks_by_component(tasks, budgets):
     # Group tasks into their components based on budgets.csv
     components = {}
     for budget in budgets:
-        comp_id = budget.component_id
+        comp_id = budget.id
         comp_tasks = [t for t in tasks if t.component_id == comp_id]
         # Sort for RM priority order
         if budget.scheduler == Scheduler.RM:
@@ -118,7 +118,7 @@ def summarize_by_core(components, architectures):
       - Also ensure each component passed its local schedulability check
     """
     # Group components per core
-    core_map = {arch.core_id: [] for arch in architectures}
+    core_map = {arch.id: [] for arch in architectures}
     for comp in components.values():
         core_map[comp['core_id']].append(comp)
 
@@ -173,7 +173,7 @@ def write_solution_csv(tasks, components, filename='solution.csv'):  # noqa: E30
             else:
                 demand = DBF.dbf_edf(comp['tasks'], task.period)     # Eq.2
             rows.append({
-                'task_name': task.task_name,
+                'task_name': task.id,
                 'component_id': cid,
                 'task_schedulable': int(demand <= supply.sbf(task.period)),
                 'component_schedulable': int(comp['schedulable'])

@@ -1,0 +1,3 @@
+Task,Component,Task Schedulable,Avg Response Time,Max Response Time,Component Schedulable
+Task_0,Camera_Sensor,True,23.00,23.00,True
+Task_1,Camera_Sensor,True,77.00,77.00,True

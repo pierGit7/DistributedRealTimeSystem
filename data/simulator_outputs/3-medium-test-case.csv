@@ -1,0 +1,19 @@
+Task,Component,Task Schedulable,Avg Response Time,Max Response Time,Component Schedulable
+Task_0,Camera_Sensor,True,19.44,23.00,True
+Task_1,Camera_Sensor,True,11.44,13.00,True
+Task_2,Camera_Sensor,True,132.67,139.00,True
+Task_3,Camera_Sensor,True,9.22,12.00,True
+Task_4,Camera_Sensor,True,416.00,416.00,True
+Task_5,Image_Processor,True,6.50,7.00,True
+Task_6,Image_Processor,True,7.00,7.00,True
+Task_7,Image_Processor,True,37.50,43.00,True
+Task_8,Lidar_Sensor,True,3.47,4.00,True
+Task_9,Lidar_Sensor,True,45.17,62.00,True
+Task_10,Lidar_Sensor,True,10.08,15.00,True
+Task_11,Lidar_Sensor,True,94.00,103.00,True
+Task_12,Control_Unit,True,9.25,18.00,True
+Task_13,Control_Unit,True,9.40,12.00,True
+Task_14,Control_Unit,True,23.44,37.00,True
+Task_15,Control_Unit,True,11.58,22.00,True
+Task_16,Control_Unit,True,20.58,36.00,True
+Task_17,Control_Unit,True,19.27,28.00,True
