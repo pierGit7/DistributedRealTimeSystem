@@ -369,8 +369,7 @@ class Simulator:
 
 def main():
     # Base path for test case files
-    base_path = 'data/testcases/4-large-test-case'
-    # base_path = 'data/testcases/4-large-test-case'
+    base_path = 'data/testcases/10-unschedulable-test-case'
 
     # Read architectures
     architecture_path = f'{base_path}/architecture.csv'

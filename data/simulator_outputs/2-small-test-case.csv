@@ -1,0 +1,10 @@
+Task,Component,Task Schedulable,Avg Response Time,Max Response Time,Component Schedulable
+Task_0,Camera_Sensor,True,7.75,8.00,False
+Task_1,Camera_Sensor,True,104.33,120.00,False
+Task_2,Camera_Sensor,True,4.92,7.00,False
+Task_3,Camera_Sensor,False,199.00,205.00,False
+Task_4,Image_Processor,True,6.83,12.00,True
+Task_5,Image_Processor,True,62.33,78.00,True
+Task_6,Image_Processor,True,163.67,256.00,True
+Task_7,Image_Processor,True,91.00,158.00,True
+Task_8,Image_Processor,True,10.88,16.00,True
